@@ -70,3 +70,48 @@ class Model2(nn.Module):
                 shape (num_images, latents)
         """
         return self.model(images)
+
+
+class Model3(nn.Module):
+    NUM_INPUT_CHANNELS = 3
+    NUM_CONV_LAYERS = 5
+    NUM_HIDDEN_CHANNELS = 64
+    KERNEL_SIZE = 3
+
+    def __init__(self, device):
+        # for input size 3 * 224 * 224
+        super().__init__()
+        layers = []
+        in_channels = self.NUM_INPUT_CHANNELS
+        for _ in range(self.NUM_CONV_LAYERS):
+            layers.append(
+                nn.Conv2d(
+                    in_channels,
+                    self.NUM_HIDDEN_CHANNELS,
+                    (self.KERNEL_SIZE, self.KERNEL_SIZE),
+                    padding='same'
+                )
+            )
+            layers.append(nn.BatchNorm2d(self.NUM_HIDDEN_CHANNELS))
+            layers.append(nn.ReLU())
+            layers.append(nn.MaxPool2d(2))
+            in_channels = self.NUM_HIDDEN_CHANNELS
+
+        layers.append(nn.AvgPool2d(7))
+        layers.append(nn.Flatten())
+        self._layers = nn.Sequential(*layers)
+        self.to(device)
+
+    def forward(self, images):
+        """Computes the latent representation of a batch of images.
+
+        Args:
+            images (Tensor): batch of images
+                shape (num_images, channels, height, width)
+
+        Returns:
+            a Tensor containing a batch of latent representations
+                shape (num_images, latents)
+        """
+        # images (num_iamges, 3, 224, 224)
+        return self._layers(images)     # (num_images, 64)
