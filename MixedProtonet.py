@@ -16,19 +16,19 @@ import MixedDataset
 import VGGFlowers
 import Fungi
 import utils
-from model import Model1, Model2
+from model import model_list
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 SUMMARY_INTERVAL = 10
-SAVE_INTERVAL = 1000
-PRINT_INTERVAL = 200
+SAVE_INTERVAL = 10
+PRINT_INTERVAL = 10
 VAL_INTERVAL = PRINT_INTERVAL * 5
 NUM_TEST_TASKS = 600
 
 class ProtoNet:
     """Trains and assesses a prototypical network."""
 
-    def __init__(self, input_len, learning_rate, log_dir):
+    def __init__(self, input_len, learning_rate, log_dir, model_num):
         """Inits ProtoNet.
 
         Args:
@@ -36,7 +36,7 @@ class ProtoNet:
             log_dir (str): path to logging directory
         """
 
-        self._network = Model2(input_len, DEVICE)
+        self._network = model_list[model_num](input_len, DEVICE)
         self._optimizer = torch.optim.Adam(
             self._network.parameters(),
             lr=learning_rate
@@ -233,7 +233,7 @@ def main(args):
     print(f'log_dir: {log_dir}')
     writer = tensorboard.SummaryWriter(log_dir=log_dir)
 
-    protonet = ProtoNet(args.input_len, args.learning_rate, log_dir)
+    protonet = ProtoNet(args.learning_rate, log_dir, args.model_num)
 
     if args.checkpoint_step > -1:
         protonet.load(args.checkpoint_step)
@@ -317,6 +317,8 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint_step', type=int, default=-1,
                         help=('checkpoint iteration to load for resuming '
                               'training, or for evaluation (-1 is ignored)'))
+    parser.add_argument('--model_num', type=int, default=1,
+                        help=('which model to use (from model.py)'))
 
     main_args = parser.parse_args()
     main(main_args)

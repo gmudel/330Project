@@ -115,3 +115,5 @@ class Model3(nn.Module):
         """
         # images (num_iamges, 3, 224, 224)
         return self._layers(images)     # (num_images, 64)
+
+model_list = [Model1, Model2, Model3]
