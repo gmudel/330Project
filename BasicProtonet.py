@@ -253,7 +253,7 @@ def main(args):
             args.num_query,
             num_training_tasks
         )
-        dataloader_val = VGGFlowers.get_vggflowers_dataloader(
+        dataloader_val = Fungi.get_fungi_dataloader(
             'val',
             args.batch_size,
             args.num_way,
