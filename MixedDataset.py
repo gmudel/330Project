@@ -25,8 +25,8 @@ class MixedDataset(dataset.Dataset):
     def __init__(self, num_support, num_query):
         # processing fungi
         self._fungus_folders = []
-        for fungus_folder in glob.glob(os.path.join(self._BASE_FUNGI_PATH, 'images', '*')):
-            if len(glob.glob(os.path.join(fungus_folder, '*.JPG'))) >= NUM_SAMPLES_PER_CLASS:
+        for fungus_folder in glob.glob(os.path.join(self._BASE_FUNGI_PATH, 'features', '*')):
+            if len(glob.glob(os.path.join(fungus_folder, '*.pt'))) >= NUM_SAMPLES_PER_CLASS:
                 self._fungus_folders.append(fungus_folder)
         # shuffle classes
         np.random.default_rng(0).shuffle(self._fungus_folders)
@@ -91,7 +91,7 @@ class MixedDataset(dataset.Dataset):
                 # TODO: 1. implement load_features
                 #       2. change file path once we have the features
                 images = [load_features(os.path.join(self._BASE_FLOWERS_PATH, 'features',
-                                                  'image_{:05d}'.format(img_id)))
+                                                     'image_{:05d}.pt'.format(img_id)))
                           for img_id in sampled_img_ids]
 
                 # split sampled examples into support and query
@@ -120,10 +120,11 @@ class MixedDataset(dataset.Dataset):
                 labels_query.extend([label] * self._num_query)
 
             # cluster the fungi features
+            fungi_features = torch.stack(fungi_features)
             kmeans = KMeansConstrained(n_clusters=len(fungi_idxs),
                                        size_min=self._num_support + self._num_query, random_state=0)
             predicted_labels = kmeans.fit_predict(fungi_features)
-            for cluster in kmeans.n_clusters:
+            for cluster in range(kmeans.n_clusters):
                 cluster_features = fungi_features[np.where(predicted_labels == cluster)]
                 images_support.extend(cluster_features[:self._num_support])
                 images_query.extend(cluster_features[self._num_support:])
@@ -195,7 +196,7 @@ class MixedSampler(sampler.Sampler):
         else:
             # only sample from fungi
             return ((self._is_train, (),
-                    np.random.default_rng().choice(self._fungi_split_idxs, size=self._num_way, replace=False))
+                     np.random.default_rng().choice(self._fungi_split_idxs, size=self._num_way, replace=False))
                     for _ in range(self._num_tasks))
 
     def __len__(self):

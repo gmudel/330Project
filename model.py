@@ -116,4 +116,33 @@ class Model3(nn.Module):
         # images (num_iamges, 3, 224, 224)
         return self._layers(images)     # (num_images, 64)
 
-model_list = [Model1, Model2, Model3]
+
+class Model4(nn.Module):
+
+    def __init__(self, input_len, device):
+        """ MLP
+        """
+        super().__init__()
+        self.input_len = input_len
+        self.model = nn.Sequential(nn.Linear(input_len, 256),
+                                   nn.ReLU(),
+                                   nn.Linear(256, 128),
+                                   nn.ReLU(),
+                                   nn.Linear(128, 64))
+        self.model.to(device)
+
+    def forward(self, images):
+        """Computes the latent representation of a batch of images.
+
+        Args:
+            images (Tensor): batch of images
+                shape (num_images, input_len)
+
+        Returns:
+            a Tensor containing a batch of latent representations
+                shape (num_images, latents)
+        """
+        return self.model(images)
+
+
+model_list = [Model1, Model2, Model3, Model4]

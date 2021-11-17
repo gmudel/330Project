@@ -32,8 +32,7 @@ def load_image(file_path, transform=None):
 
 
 def load_features(file_path):
-    # TODO: read features stored at file_path
-    pass
+    return torch.load(file_path)
 
 
 def score(logits, labels):

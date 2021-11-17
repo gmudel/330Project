@@ -36,7 +36,7 @@ class ProtoNet:
             log_dir (str): path to logging directory
         """
 
-        self._network = model_list[model_num](input_len, DEVICE)
+        self._network = model_list[model_num - 1](input_len, DEVICE)
         self._optimizer = torch.optim.Adam(
             self._network.parameters(),
             lr=learning_rate
@@ -233,7 +233,7 @@ def main(args):
     print(f'log_dir: {log_dir}')
     writer = tensorboard.SummaryWriter(log_dir=log_dir)
 
-    protonet = ProtoNet(args.learning_rate, log_dir, args.model_num)
+    protonet = ProtoNet(args.input_len, args.learning_rate, log_dir, args.model_num)
 
     if args.checkpoint_step > -1:
         protonet.load(args.checkpoint_step)
@@ -296,7 +296,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('Train a ProtoNet!')
     parser.add_argument('--log_dir', type=str, default=None,
                         help='directory to save to or load from')
-    parser.add_argument('--input_len', type=int, default=2208,
+    parser.add_argument('--input_len', type=int, default=512,
                         help='length of image features stored on disk')
     parser.add_argument('--num_way', type=int, default=5,
                         help='number of classes in a task')
@@ -317,7 +317,7 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint_step', type=int, default=-1,
                         help=('checkpoint iteration to load for resuming '
                               'training, or for evaluation (-1 is ignored)'))
-    parser.add_argument('--model_num', type=int, default=1,
+    parser.add_argument('--model_num', type=int, default=4,
                         help=('which model to use (from model.py)'))
 
     main_args = parser.parse_args()
