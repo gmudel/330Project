@@ -8,7 +8,7 @@ import torch.nn as nn
 
 class Model1(nn.Module):
 
-    def __init__(self, device):
+    def __init__(self, input_len, device):
         """ A wrapper model for extracting features used in Protonet
         A densenet followed by some linear layers
         """
@@ -124,11 +124,7 @@ class Model4(nn.Module):
         """
         super().__init__()
         self.input_len = input_len
-        self.model = nn.Sequential(nn.Linear(self.input_len, 1024),
-                                   nn.ReLU(),
-                                   nn.Linear(1024, 512),
-                                   nn.ReLU(),
-                                   nn.Linear(512, 256),
+        self.model = nn.Sequential(nn.Linear(input_len, 256),
                                    nn.ReLU(),
                                    nn.Linear(256, 128))
         self.model.to(device)

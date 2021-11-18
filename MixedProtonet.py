@@ -226,7 +226,7 @@ class ProtoNet:
 def main(args):
     log_dir = args.log_dir
     if log_dir is None:
-        log_dir = f'./logs/protonet/res50mixed.n:{args.num_way}.' \
+        log_dir = f'./logs/protonet/mixed{args.features}.n:{args.num_way}.' \
                   f'k:{args.num_support}.q:{args.num_query}.' \
                   f'd:{args.num_distract}.' \
                   f'lr:{args.learning_rate}.b:{args.batch_size}'  # pylint: disable=line-too-long
@@ -257,7 +257,8 @@ def main(args):
             args.num_support,
             args.num_query,
             args.num_distract,
-            num_training_tasks
+            num_training_tasks,
+            args.features
         )
         dataloader_val = MixedDataset.get_mixed_dataloader(
             'val',
@@ -266,7 +267,8 @@ def main(args):
             args.num_support,
             args.num_query,
             args.num_distract,
-            args.batch_size * 4
+            args.batch_size * 4,
+            args.features
         )
         protonet.train(
             dataloader_train,
@@ -287,7 +289,8 @@ def main(args):
             args.num_support,
             args.num_query,
             0,
-            NUM_TEST_TASKS
+            NUM_TEST_TASKS,
+            args.features
         )
         protonet.test(dataloader_test)
 
@@ -317,8 +320,11 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint_step', type=int, default=-1,
                         help=('checkpoint iteration to load for resuming '
                               'training, or for evaluation (-1 is ignored)'))
-    parser.add_argument('--model_num', type=int, default=4,
+    parser.add_argument('--model_num', type=int, default=2,
                         help=('which model to use (from model.py)'))
+    parser.add_argument('--features', type=str, default='resnet50', choices=['resnet50', 'resnet18',
+                                                                           'densenet161'],
+                        help='which features to use')
 
     main_args = parser.parse_args()
     main(main_args)

@@ -17,15 +17,14 @@ NUM_SAMPLES_PER_CLASS = 20
 
 class MixedDataset(dataset.Dataset):
 
-    # TODO: change these paths if necessary
     # CODE DUPLICATION MAKES IT LOOK LONG
     _BASE_FUNGI_PATH = 'data/fungi'
     _BASE_FLOWERS_PATH = 'data/vggflowers'
 
-    def __init__(self, num_support, num_query):
+    def __init__(self, num_support, num_query, features):
         # processing fungi
         self._fungus_folders = []
-        for fungus_folder in glob.glob(os.path.join(self._BASE_FUNGI_PATH, 'features', '*')):
+        for fungus_folder in glob.glob(os.path.join(self._BASE_FUNGI_PATH, features, '*')):
             if len(glob.glob(os.path.join(fungus_folder, '*.pt'))) >= NUM_SAMPLES_PER_CLASS:
                 self._fungus_folders.append(fungus_folder)
         # shuffle classes
@@ -45,6 +44,7 @@ class MixedDataset(dataset.Dataset):
         # meta learning params
         self._num_support = num_support
         self._num_query = num_query
+        self.features = features
 
     def __getitem__(self, item):
         """Constructs a task.
@@ -88,9 +88,7 @@ class MixedDataset(dataset.Dataset):
                     size=self._num_support + self._num_query,
                     replace=False
                 )
-                # TODO: 1. implement load_features
-                #       2. change file path once we have the features
-                images = [load_features(os.path.join(self._BASE_FLOWERS_PATH, 'features',
+                images = [load_features(os.path.join(self._BASE_FLOWERS_PATH, self.features,
                                                      'image_{:05d}.pt'.format(img_id)))
                           for img_id in sampled_img_ids]
 
@@ -105,7 +103,6 @@ class MixedDataset(dataset.Dataset):
             fungi_features = []
             for label, class_idx in enumerate(fungi_idxs, start=len(flowers_idxs)):
                 # for each class collect (K + Q) image features
-                # TODO: change paths to where fungi features are stored
                 all_file_paths = glob.glob(
                     os.path.join(self._fungus_folders[class_idx], '*')
                 )
@@ -134,7 +131,6 @@ class MixedDataset(dataset.Dataset):
             # use ground truth labels for fungi
             for label, class_idx in enumerate(fungi_idxs):
                 # get a class's examples and sample from them
-                # TODO: change paths to where fungi features are stored
                 all_file_paths = glob.glob(
                     os.path.join(self._fungus_folders[class_idx], '*')
                 )
@@ -214,7 +210,8 @@ def get_mixed_dataloader(
         num_support,
         num_query,
         num_distract,
-        num_tasks_per_epoch
+        num_tasks_per_epoch,
+        features
 ):
     """Returns a dataloader.DataLoader for mixed Fungi and flowers dataset.
 
@@ -228,13 +225,13 @@ def get_mixed_dataloader(
                                 num_distracts <= num_way
         num_tasks_per_epoch (int): number of tasks before DataLoader is
             exhausted
+        features (str): which feature directory to use
     """
-    dataset = MixedDataset(num_support, num_query)
+    dataset = MixedDataset(num_support, num_query, features)
     NUM_FUNGI_TRAIN_CLASSES = int(dataset.num_fungi_classes * 0.7)
     NUM_FUNGI_VAL_CLASSES = int(dataset.num_fungi_classes * 0.15)
     NUM_FUNGI_TEST_CLASSES = dataset.num_fungi_classes - NUM_FUNGI_TRAIN_CLASSES - NUM_FUNGI_VAL_CLASSES
 
-    dataset = MixedDataset(num_support, num_query)
     NUM_FLOWERS_TRAIN_CLASSES = int(dataset.num_flowers_classes * 0.7)
     NUM_FLOWERS_VAL_CLASSES = int(dataset.num_flowers_classes * 0.15)
     NUM_FLOWERS_TEST_CLASSES = dataset.num_flowers_classes - NUM_FLOWERS_TRAIN_CLASSES - \

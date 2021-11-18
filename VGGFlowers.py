@@ -12,7 +12,8 @@ class VGGFlowersDataset(dataset.Dataset):
 
     _BASE_PATH = 'data/vggflowers'
 
-    def __init__(self, num_support, num_query, transform=None, labels_file='imagelabels.mat'):
+    def __init__(self, num_support, num_query, features, transform=None,
+                 labels_file='imagelabels.mat'):
         labels_mat = scipy.io.loadmat(os.path.join(self._BASE_PATH, labels_file))
         num_classes = len(set(labels_mat['labels'][0]))
 
@@ -28,6 +29,7 @@ class VGGFlowersDataset(dataset.Dataset):
         self._transform = transform if transform else get_default_transform()
         self._num_support = num_support
         self._num_query = num_query
+        self.features = features
 
     def __getitem__(self, class_idxs):
         """Constructs a task.
@@ -58,10 +60,15 @@ class VGGFlowersDataset(dataset.Dataset):
                 size=self._num_support + self._num_query,
                 replace=False
             )
-            images = [load_image(os.path.join(self._BASE_PATH, 'images',
-                                              'image_{:05d}.jpg'.format(img_id)),
-                      self._transform)
-                      for img_id in sampled_img_ids]
+            if self.features == 'images':
+                images = [load_image(os.path.join(self._BASE_PATH, 'images',
+                                                  'image_{:05d}.jpg'.format(img_id)),
+                          self._transform)
+                          for img_id in sampled_img_ids]
+            else:
+                images = [load_features(os.path.join(self._BASE_PATH, self.features,
+                                                     'image_{:05d}.pt'.format(img_id))) for
+                          img_id in sampled_img_ids]
 
             # split sampled examples into support and query
             images_support.extend(images[:self._num_support])
@@ -118,7 +125,8 @@ def get_vggflowers_dataloader(
         num_way,
         num_support,
         num_query,
-        num_tasks_per_epoch
+        num_tasks_per_epoch,
+        features
 ):
     """Returns a dataloader.DataLoader for VGGFlowers.
 
@@ -130,8 +138,9 @@ def get_vggflowers_dataloader(
         num_query (int): number of query examples per class
         num_tasks_per_epoch (int): number of tasks before DataLoader is
             exhausted
+        features (str): which feature directory to use
     """
-    flowers_dataset = VGGFlowersDataset(num_support, num_query)
+    flowers_dataset = VGGFlowersDataset(num_support, num_query, features)
     NUM_TRAIN_CLASSES = int(flowers_dataset.num_classes * 0.7)
     NUM_VAL_CLASSES = int(flowers_dataset.num_classes * 0.15)
     NUM_TEST_CLASSES = flowers_dataset.num_classes - NUM_TRAIN_CLASSES - NUM_VAL_CLASSES

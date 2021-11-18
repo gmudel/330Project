@@ -18,7 +18,7 @@ from model import model_list
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 SUMMARY_INTERVAL = 10
-SAVE_INTERVAL = 10
+SAVE_INTERVAL = 100
 PRINT_INTERVAL = 10
 VAL_INTERVAL = PRINT_INTERVAL * 5
 NUM_TEST_TASKS = 600
@@ -26,7 +26,7 @@ NUM_TEST_TASKS = 600
 class ProtoNet:
     """Trains and assesses a prototypical network."""
 
-    def __init__(self, learning_rate, log_dir, model_num):
+    def __init__(self, input_len, learning_rate, log_dir, model_num):
         """Inits ProtoNet.
 
         Args:
@@ -34,7 +34,7 @@ class ProtoNet:
             log_dir (str): path to logging directory
         """
 
-        self._network = model_list[model_num - 1](DEVICE)
+        self._network = model_list[model_num - 1](input_len, DEVICE)
         self._optimizer = torch.optim.Adam(
             self._network.parameters(),
             lr=learning_rate
@@ -265,13 +265,13 @@ class ProtoNet:
 def main(args):
     log_dir = args.log_dir
     if log_dir is None:
-        log_dir = f'./logs/protonet/adjusted.n:{args.num_way}.k:{args.num_support}.' \
+        log_dir = f'./logs/protonet/adjusted{args.features}.n:{args.num_way}.k:{args.num_support}.' \
                   f'm:{args.num_unlabeled_support}.q:{args.num_query}.' \
                   f'lr:{args.learning_rate}.b:{args.batch_size}'
     print(f'log_dir: {log_dir}')
     writer = tensorboard.SummaryWriter(log_dir=log_dir)
 
-    protonet = ProtoNet(args.learning_rate, log_dir, args.model_num)
+    protonet = ProtoNet(args.input_len, args.learning_rate, log_dir, args.model_num)
 
     if args.checkpoint_step > -1:
         protonet.load(args.checkpoint_step)
@@ -295,7 +295,8 @@ def main(args):
             args.num_way,
             args.num_support,
             args.num_query,
-            num_training_tasks
+            num_training_tasks,
+            args.features
         )
         # for unlabeled portion (fungi) of a task
         # same N, but no Q
@@ -305,7 +306,8 @@ def main(args):
             args.num_way,
             args.num_unlabeled_support,
             0,
-            num_training_tasks
+            num_training_tasks,
+            args.features
         )
         dataloader_val = Fungi.get_fungi_dataloader(
             'val',
@@ -313,7 +315,8 @@ def main(args):
             args.num_way,
             args.num_support,
             args.num_query,
-            args.batch_size * 4
+            args.batch_size * 4,
+            args.features
         )
 
         protonet.train(
@@ -336,7 +339,8 @@ def main(args):
             args.num_way,
             args.num_support,
             args.num_query,
-            NUM_TEST_TASKS
+            NUM_TEST_TASKS,
+            args.features
         )
         protonet.test(dataloader_test)
 
@@ -345,6 +349,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('Train a ProtoNet!')
     parser.add_argument('--log_dir', type=str, default=None,
                         help='directory to save to or load from')
+    parser.add_argument('--input_len', type=int, default=2048,
+                        help='length of image features stored on disk')
     parser.add_argument('--num_way', type=int, default=5,
                         help='number of classes in a task')
     parser.add_argument('--num_support', type=int, default=1,
@@ -364,8 +370,12 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint_step', type=int, default=-1,
                         help=('checkpoint iteration to load for resuming '
                               'training, or for evaluation (-1 is ignored)'))
-    parser.add_argument('--model_num', type=int, default=1,
+    parser.add_argument('--model_num', type=int, default=2,
                         help=('which model to use (from model.py)'))
+    parser.add_argument('--features', type=str, default='images', choices=['images', 'resnet50',
+                                                                           'resnet18',
+                                                                           'densenet161'],
+                        help='which features to use (images for raw inputs)')
 
     main_args = parser.parse_args()
     main(main_args)

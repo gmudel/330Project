@@ -15,10 +15,11 @@ class FungiDataset(dataset.Dataset):
 
     _BASE_PATH = 'data/fungi'
 
-    def __init__(self, num_support, num_query, transform=None):
+    def __init__(self, num_support, num_query, features, transform=None):
         self._fungus_folders = []
-        for fungus_folder in glob.glob(os.path.join(self._BASE_PATH, 'images', '*')):
-            if len(glob.glob(os.path.join(fungus_folder, '*.JPG'))) >= NUM_SAMPLES_PER_CLASS:
+        suffix = '*.JPG' if features == 'images' else '.pt'
+        for fungus_folder in glob.glob(os.path.join(self._BASE_PATH, features, '*')):
+            if len(glob.glob(os.path.join(fungus_folder, suffix))) >= NUM_SAMPLES_PER_CLASS:
                 self._fungus_folders.append(fungus_folder)
         # shuffle classes
         np.random.default_rng(0).shuffle(self._fungus_folders)
@@ -27,6 +28,7 @@ class FungiDataset(dataset.Dataset):
         self._transform = transform if transform else get_default_transform()
         self._num_support = num_support
         self._num_query = num_query
+        self.features = features
 
     def __getitem__(self, class_idxs):
         """Constructs a task.
@@ -50,10 +52,11 @@ class FungiDataset(dataset.Dataset):
         images_support, images_query = [], []
         labels_support, labels_query = [], []
 
+        suffix = '*.JPG' if self.features == 'images' else '.pt'
         for label, class_idx in enumerate(class_idxs):
             # get a class's examples and sample from them
             all_file_paths = glob.glob(
-                os.path.join(self._fungus_folders[class_idx], '*.JPG')
+                os.path.join(self._fungus_folders[class_idx], suffix)
             )
             sampled_file_paths = np.random.default_rng().choice(
                 all_file_paths,
@@ -61,7 +64,10 @@ class FungiDataset(dataset.Dataset):
                 replace=False
             )
 
-            images = [load_image(file_path, self._transform) for file_path in sampled_file_paths]
+            if self.features == 'images':
+                images = [load_image(file_path, self._transform) for file_path in sampled_file_paths]
+            else:
+                images = [load_features(file_path) for file_path in sampled_file_paths]
 
             # split sampled examples into support and query
             images_support.extend(images[:self._num_support])
@@ -121,7 +127,8 @@ def get_fungi_dataloader(
         num_way,
         num_support,
         num_query,
-        num_tasks_per_epoch
+        num_tasks_per_epoch,
+        features
 ):
     """Returns a dataloader.DataLoader for Fungi.
 
@@ -133,8 +140,9 @@ def get_fungi_dataloader(
         num_query (int): number of query examples per class
         num_tasks_per_epoch (int): number of tasks before DataLoader is
             exhausted
+        features (str): which feature directory to use
     """
-    fungi_dataset = FungiDataset(num_support, num_query)
+    fungi_dataset = FungiDataset(num_support, num_query, features)
     NUM_TRAIN_CLASSES = int(fungi_dataset.num_classes * 0.7)
     NUM_VAL_CLASSES = int(fungi_dataset.num_classes * 0.15)
     NUM_TEST_CLASSES = fungi_dataset.num_classes - NUM_TRAIN_CLASSES - NUM_VAL_CLASSES
