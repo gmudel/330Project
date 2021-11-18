@@ -78,7 +78,7 @@ class Model3(nn.Module):
     NUM_HIDDEN_CHANNELS = 64
     KERNEL_SIZE = 3
 
-    def __init__(self, device):
+    def __init__(self, input_len, device):
         # for input size 3 * 224 * 224
         super().__init__()
         layers = []
