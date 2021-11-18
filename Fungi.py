@@ -52,7 +52,7 @@ class FungiDataset(dataset.Dataset):
         images_support, images_query = [], []
         labels_support, labels_query = [], []
 
-        suffix = '*.JPG' if self.features == 'images' else '.pt'
+        suffix = '*.JPG' if self.features == 'images' else '*.pt'
         for label, class_idx in enumerate(class_idxs):
             # get a class's examples and sample from them
             all_file_paths = glob.glob(
