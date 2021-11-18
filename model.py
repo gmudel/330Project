@@ -124,11 +124,13 @@ class Model4(nn.Module):
         """
         super().__init__()
         self.input_len = input_len
-        self.model = nn.Sequential(nn.Linear(input_len, 256),
+        self.model = nn.Sequential(nn.Linear(self.input_len, 1024),
                                    nn.ReLU(),
-                                   nn.Linear(256, 128),
+                                   nn.Linear(1024, 512),
                                    nn.ReLU(),
-                                   nn.Linear(128, 64))
+                                   nn.Linear(512, 256),
+                                   nn.ReLU(),
+                                   nn.Linear(256, 128))
         self.model.to(device)
 
     def forward(self, images):

@@ -20,7 +20,7 @@ from model import model_list
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 SUMMARY_INTERVAL = 10
-SAVE_INTERVAL = 10
+SAVE_INTERVAL = 100
 PRINT_INTERVAL = 10
 VAL_INTERVAL = PRINT_INTERVAL * 5
 NUM_TEST_TASKS = 600
@@ -226,7 +226,7 @@ class ProtoNet:
 def main(args):
     log_dir = args.log_dir
     if log_dir is None:
-        log_dir = f'./logs/protonet/mixed.n:{args.num_way}.' \
+        log_dir = f'./logs/protonet/res50mixed.n:{args.num_way}.' \
                   f'k:{args.num_support}.q:{args.num_query}.' \
                   f'd:{args.num_distract}.' \
                   f'lr:{args.learning_rate}.b:{args.batch_size}'  # pylint: disable=line-too-long
@@ -296,7 +296,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('Train a ProtoNet!')
     parser.add_argument('--log_dir', type=str, default=None,
                         help='directory to save to or load from')
-    parser.add_argument('--input_len', type=int, default=512,
+    parser.add_argument('--input_len', type=int, default=2048,
                         help='length of image features stored on disk')
     parser.add_argument('--num_way', type=int, default=5,
                         help='number of classes in a task')
