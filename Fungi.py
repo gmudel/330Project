@@ -17,7 +17,7 @@ class FungiDataset(dataset.Dataset):
 
     def __init__(self, num_support, num_query, features, transform=None):
         self._fungus_folders = []
-        suffix = '*.JPG' if features == 'images' else '.pt'
+        suffix = '*.JPG' if features == 'images' else '*.pt'
         for fungus_folder in glob.glob(os.path.join(self._BASE_PATH, features, '*')):
             if len(glob.glob(os.path.join(fungus_folder, suffix))) >= NUM_SAMPLES_PER_CLASS:
                 self._fungus_folders.append(fungus_folder)
