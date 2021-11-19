@@ -240,7 +240,8 @@ class ProtoNet:
         )
         if os.path.isfile(target_path):
             state = torch.load(target_path)
-            self._network.load_state_dict(state['network_state_dict'])
+            self._network1.load_state_dict(state['network1_state_dict'])
+            self._network2.load_state_dict(state['network2_state_dict'])
             self._optimizer.load_state_dict(state['optimizer_state_dict'])
             self._start_train_step = checkpoint_step + 1
             print(f'Loaded checkpoint iteration {checkpoint_step}.')
@@ -256,7 +257,8 @@ class ProtoNet:
             checkpoint_step (int): iteration to label checkpoint with
         """
         torch.save(
-            dict(network_state_dict=self._network.state_dict(),
+            dict(network1_state_dict=self._network1.state_dict(),
+                 network2_state_dict=self._network2.state_dict(),
                  optimizer_state_dict=self._optimizer.state_dict()),
             f'{os.path.join(self._log_dir, "state")}{checkpoint_step}.pt'
         )
