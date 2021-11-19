@@ -142,5 +142,40 @@ class Model4(nn.Module):
         """
         return self.model(images)
 
+class Model5(nn.Module):
 
-model_list = [Model1, Model2, Model3, Model4]
+    def __init__(self, input_len, device):
+        """ A wrapper model for extracting features used in Protonet
+        A resnet50 followed by some linear layers
+        """
+        super().__init__()
+        self.model = models.resnet50(pretrained=True)
+        # freeze the resnet weights
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+        classifier_input = self.model.classifier.in_features
+        self.model.classifier = nn.Sequential(nn.Linear(classifier_input, 1024),
+                                              nn.ReLU(),
+                                              nn.Linear(1024, 512),
+                                              nn.ReLU(),
+                                              nn.Linear(512, 256),
+                                              nn.ReLU(),
+                                              nn.Linear(256, 128))
+        self.model.to(device)
+
+    def forward(self, images):
+        """Computes the latent representation of a batch of images.
+
+        Args:
+            images (Tensor): batch of images
+                shape (num_images, channels, height, width)
+
+        Returns:
+            a Tensor containing a batch of latent representations
+                shape (num_images, latents)
+        """
+        return self.model(images)
+
+
+model_list = [Model1, Model2, Model3, Model4, Model5]
