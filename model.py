@@ -154,8 +154,8 @@ class Model5(nn.Module):
         for param in self.model.parameters():
             param.requires_grad = False
 
-        classifier_input = self.model.classifier.in_features
-        self.model.classifier = nn.Sequential(nn.Linear(classifier_input, 1024),
+        classifier_input = self.model.fc.in_features
+        self.model.fc = nn.Sequential(nn.Linear(classifier_input, 1024),
                                               nn.ReLU(),
                                               nn.Linear(1024, 512),
                                               nn.ReLU(),
