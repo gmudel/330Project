@@ -441,7 +441,8 @@ def main(args):
             args.num_way,
             args.num_support,
             args.num_query,
-            num_training_tasks
+            num_training_tasks,
+            args.features
         )
         dataloader_val = Fungi.get_fungi_dataloader(
             'val',
@@ -449,7 +450,8 @@ def main(args):
             args.num_way,
             args.num_support,
             args.num_query,
-            args.batch_size * 4
+            args.batch_size * 4,
+            args.features
         )
         maml.train(
             dataloader_train,
@@ -469,7 +471,8 @@ def main(args):
             args.num_way,
             args.num_support,
             args.num_query,
-            NUM_TEST_TASKS
+            NUM_TEST_TASKS,
+            args.features
         )
         maml.test(dataloader_test)
 
@@ -501,6 +504,8 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint_step', type=int, default=-1,
                         help=('checkpoint iteration to load for resuming '
                               'training, or for evaluation (-1 is ignored)'))
+    parser.add_argument('--features', type=str, default='images', choices=['images'],
+                        help='which features to use (images for raw inputs)')
 
     main_args = parser.parse_args()
     main(main_args)
