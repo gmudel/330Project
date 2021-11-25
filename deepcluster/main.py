@@ -225,7 +225,7 @@ def main(args):
                     'arch': args.arch,
                     'state_dict': model.state_dict(),
                     'optimizer' : optimizer.state_dict()},
-                   os.path.join(log_dir, 'checkpoint.pth.tar'))
+                   os.path.join(args.log_dir, 'checkpoint.pth.tar'))
 
         # save cluster assignments
         cluster_log.log(deepcluster.images_lists)
