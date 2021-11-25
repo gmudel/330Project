@@ -8,6 +8,8 @@ import torch
 from torch.utils.data import dataset, sampler, dataloader
 import glob
 import os
+from distutils.dir_util import copy_tree
+import os
 
 NUM_SAMPLES_PER_CLASS = 20
 
@@ -18,11 +20,36 @@ class FungiDataset(dataset.Dataset):
     def __init__(self, num_support, num_query, features, transform=None):
         self._fungus_folders = []
         suffix = '*.JPG' if features == 'images' else '*.pt'
+        ind = 0
+        self.indices = []
         for fungus_folder in glob.glob(os.path.join(self._BASE_PATH, features, '*')):
             if len(glob.glob(os.path.join(fungus_folder, suffix))) >= NUM_SAMPLES_PER_CLASS:
                 self._fungus_folders.append(fungus_folder)
-        # shuffle classes
+        #print("ALL FUNGUS FOLDERS", len(self._fungus_folders))
+       
+        #shuffle classes
         np.random.default_rng(0).shuffle(self._fungus_folders)
+        
+        #CODE USED TO CREATE data/fungi/train folder
+        '''
+        copy_tree_folders = []
+        for folder in self._fungus_folders:
+            folder_suffix = folder.split("/")[-1]
+            new_folder = 'data/fungi/train/'+folder_suffix
+            copy_tree_folders.append(new_folder)
+    
+        print("COPY TREE FOLDERS", copy_tree_folders)
+        print("LEN", len(copy_tree_folders))
+        
+        for i in range(int(0.7 * len(self._fungus_folders))):
+            old_folder = self._fungus_folders[i]
+            new_folder = copy_tree_folders[i]
+            copy_tree(old_folder, new_folder)
+            if (i % 100) == 0:
+                print(i)
+    
+        print("DONE")
+        '''
         self.num_classes = len(self._fungus_folders)
 
         self._transform = transform if transform else get_default_transform()
@@ -86,7 +113,9 @@ class FungiDataset(dataset.Dataset):
 
         return images_support, labels_support, images_query, labels_query
 
-
+    def get_indices(self):
+        return self.indices
+        
 class FungiSampler(sampler.Sampler):
     """Samples task specification keys for FungiDataset."""
 
