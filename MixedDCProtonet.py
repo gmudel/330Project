@@ -296,6 +296,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('Train a ProtoNet!')
     parser.add_argument('--log_dir', type=str, default=None,
                         help='directory to save to or load from')
+    # ignore this if using raw images
     parser.add_argument('--input_len', type=int, default=2048,
                         help='length of image features stored on disk')
     parser.add_argument('--num_way', type=int, default=5,
@@ -304,6 +305,7 @@ if __name__ == '__main__':
                         help='number of support examples per class in a task')
     parser.add_argument('--num_query', type=int, default=5,
                         help='number of query examples per class in a task')
+    # fungi_portion = 1 => no flowers
     parser.add_argument('--fungi_portion', type=float, default=1,
                         help='proportion of unsupervised fungi tasks during training')
     parser.add_argument('--learning_rate', type=float, default=0.001,
@@ -319,6 +321,7 @@ if __name__ == '__main__':
                               'training, or for evaluation (-1 is ignored)'))
     parser.add_argument('--model_num', type=int, default=3,
                         help=('which model to use (from model.py)'))
+    # use images only for deepcluster experiments
     parser.add_argument('--features', type=str, default='images', choices=['images', 'resnet50',
                                                                             'resnet18',
                                                                              'densenet161'],

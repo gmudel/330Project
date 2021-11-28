@@ -10,6 +10,7 @@ from torch.utils.data import dataset, sampler, dataloader
 import glob
 import os
 import scipy.io
+import csv
 
 NUM_SAMPLES_PER_CLASS = 20
 
@@ -28,7 +29,18 @@ class MixedDCDataset(dataset.Dataset):
         # shuffle classes
         np.random.default_rng(0).shuffle(self._fungus_folders)
         self.num_fungi_classes = len(self._fungus_folders)
-        # TODO: FUNGI WITH PSEUDO LABELS
+
+        # load fungi path with PSEUDO LABELS
+        # self._fungi_label_to_paths[i] = [list of image paths with label i]
+        self._fungi_label_to_paths = [[] for _ in range(762)]
+        with open('deepcluster/cluster_assignments.csv') as csvfile:
+            cluster_reader = csv.reader(csvfile)
+            for i, row in enumerate(cluster_reader):
+                if i > 0:   # ignore the header
+                    pseudo_label = int(row[1])
+                    filename = row[0]
+                    self._fungi_label_to_paths[pseudo_label].append(self._BASE_FUNGI_PATH + '/' +
+                                                                    features + '/' + filename)
 
         # processing flowers
         flowers_labels_mat = scipy.io.loadmat(os.path.join(self._BASE_FLOWERS_PATH, 'imagelabels.mat'))
@@ -75,7 +87,26 @@ class MixedDCDataset(dataset.Dataset):
         suffix = '*.JPG' if self.features == 'images' else '*.pt'
         if is_train:
             if is_fungi:
-                # TODO: sample from fungi with pseudo labels
+                # i don't want to deal with code dup
+                # sample from fungi with pseudo labels
+                for label, class_idx in enumerate(class_idxs):
+                    # get a class's examples and sample from them
+                    sampled_file_paths = np.random.default_rng().choice(
+                        self._fungi_label_to_paths[class_idx],
+                        size=self._num_support + self._num_query,
+                        replace=False
+                    )
+
+                    if self.features == 'images':
+                        images = [load_image(file_path, self._transform) for file_path in sampled_file_paths]
+                    else:
+                        images = [load_features(file_path) for file_path in sampled_file_paths]
+
+                    # split sampled examples into support and query
+                    images_support.extend(images[:self._num_support])
+                    images_query.extend(images[self._num_support:])
+                    labels_support.extend([label] * self._num_support)
+                    labels_query.extend([label] * self._num_query)
             else:
                 # sample from flowers with ground truth labels
                 for label, class_idx in enumerate(class_idxs):
@@ -158,7 +189,6 @@ class MixedTrainSampler(sampler.Sampler):
         for _ in range(self._num_tasks):
             x = np.random.uniform()
             if x < self._fungi_portion:
-                # TODO: choose from pseudo
                 itrs.append((True, True, np.random.default_rng().choice(self._fungi_split_idxs,
                                                                         size=self._num_way,
                                                                         replace=False)))
@@ -229,7 +259,6 @@ def get_mixed_dataloader(
             exhausted
         features (str): which feature directory to use
     """
-    # TODO: CHANGE FUNGI TRAIN
     dataset = MixedDCDataset(num_support, num_query, features)
     NUM_FUNGI_TRAIN_CLASSES = int(dataset.num_fungi_classes * 0.7)
     NUM_FUNGI_VAL_CLASSES = int(dataset.num_fungi_classes * 0.15)
@@ -238,7 +267,8 @@ def get_mixed_dataloader(
     NUM_FLOWERS_TRAIN_CLASSES = int(dataset.num_flowers_classes * 0.7)
 
     if split == 'train':
-        fungi_split_idxs = range(NUM_FUNGI_TRAIN_CLASSES)
+        # fungi_split_idxs = range(NUM_FUNGI_TRAIN_CLASSES)
+        fungi_split_idxs = range(762)
         flowers_split_idxs = range(NUM_FLOWERS_TRAIN_CLASSES)
         sampler = MixedTrainSampler(fungi_split_idxs, flowers_split_idxs, num_way, fungi_portion,
                                     num_tasks_per_epoch)
