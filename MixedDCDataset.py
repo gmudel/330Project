@@ -196,7 +196,7 @@ class MixedTrainSampler(sampler.Sampler):
                 itrs.append((True, False, np.random.default_rng().choice(self._flowers_split_idxs,
                                                                          size=self._num_way,
                                                                          replace=False)))
-        return itrs
+        return iter(itrs)
 
     def __len__(self):
         return self._num_tasks
