@@ -243,7 +243,7 @@ def main(args):
         print(
             f'Training on tasks with composition '
             f'num_way={args.num_way}, '
-            f'num_distract={args.num_distract}, '
+            f'fungi_portion={args.fungi_portion}, '
             f'num_support={args.num_support}, '
             f'num_query={args.num_query}'
         )
