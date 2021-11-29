@@ -23,8 +23,9 @@ class MixedDCDataset(dataset.Dataset):
     def __init__(self, num_support, num_query, features, transform=None):
         # processing fungi
         self._fungus_folders = []
+        suffix = '*.JPG' if features == 'images' else '*.pt'
         for fungus_folder in glob.glob(os.path.join(self._BASE_FUNGI_PATH, features, '*')):
-            if len(glob.glob(os.path.join(fungus_folder, '*.pt'))) >= NUM_SAMPLES_PER_CLASS:
+            if len(glob.glob(os.path.join(fungus_folder, suffix))) >= NUM_SAMPLES_PER_CLASS:
                 self._fungus_folders.append(fungus_folder)
         # shuffle classes
         np.random.default_rng(0).shuffle(self._fungus_folders)
