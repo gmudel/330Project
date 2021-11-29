@@ -223,7 +223,7 @@ class ProtoNet:
 def main(args):
     log_dir = args.log_dir
     if log_dir is None:
-        log_dir = f'./logs/protonet/mixed{args.features}.n:{args.num_way}.' \
+        log_dir = f'./logs/protonet/dc{args.features}.n:{args.num_way}.' \
                   f'k:{args.num_support}.q:{args.num_query}.' \
                   f'f:{args.fungi_portion}.' \
                   f'lr:{args.learning_rate}.b:{args.batch_size}'  # pylint: disable=line-too-long
