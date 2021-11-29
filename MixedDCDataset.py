@@ -20,7 +20,7 @@ class MixedDCDataset(dataset.Dataset):
     _BASE_FUNGI_PATH = 'data/fungi'
     _BASE_FLOWERS_PATH = 'data/vggflowers'
 
-    def __init__(self, num_support, num_query, features):
+    def __init__(self, num_support, num_query, features, transform=None):
         # processing fungi
         self._fungus_folders = []
         for fungus_folder in glob.glob(os.path.join(self._BASE_FUNGI_PATH, features, '*')):
@@ -52,6 +52,7 @@ class MixedDCDataset(dataset.Dataset):
         # shuffle classes
         np.random.default_rng(0).shuffle(self._flowers_labels_to_images)
 
+        self._transform = transform if transform else get_default_transform()
         # meta learning params
         self._num_support = num_support
         self._num_query = num_query
