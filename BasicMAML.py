@@ -11,6 +11,7 @@ from torch import autograd  # pylint: disable=unused-import
 from torch.utils import tensorboard
 
 import VGGFlowers
+import MixedDCDataset
 import Fungi
 import utils
 
@@ -408,7 +409,9 @@ class MAML:
 def main(args):
     log_dir = args.log_dir
     if log_dir is None:
-        log_dir = f'./logs/maml/omniglot.way:{args.num_way}.support:{args.num_support}.query:{args.num_query}.inner_steps:{args.num_inner_steps}.inner_lr:{args.inner_lr}.learn_inner_lrs:{args.learn_inner_lrs}.outer_lr:{args.outer_lr}.batch_size:{args.batch_size}'  # pylint: disable=line-too-long
+        log_dir = f'./logs/maml.f:{args.fungi_portion}.way:{args.num_way}.support' \
+                  f':{args.num_support}.query' \
+                  f':{args.num_query}.inner_steps:{args.num_inner_steps}.inner_lr:{args.inner_lr}.learn_inner_lrs:{args.learn_inner_lrs}.outer_lr:{args.outer_lr}.batch_size:{args.batch_size}'  # pylint: disable=line-too-long
     print(f'log_dir: {log_dir}')
     writer = tensorboard.SummaryWriter(log_dir=log_dir)
 
@@ -435,21 +438,23 @@ def main(args):
             f'num_support={args.num_support}, '
             f'num_query={args.num_query}'
         )
-        dataloader_train = VGGFlowers.get_vggflowers_dataloader(
+        dataloader_train = MixedDCDataset.get_mixed_dataloader(
             'train',
             args.batch_size,
             args.num_way,
             args.num_support,
             args.num_query,
+            args.fungi_portion,
             num_training_tasks,
             args.features
         )
-        dataloader_val = Fungi.get_fungi_dataloader(
+        dataloader_val = MixedDCDataset.get_mixed_dataloader(
             'val',
             args.batch_size,
             args.num_way,
             args.num_support,
             args.num_query,
+            args.fungi_portion,
             args.batch_size * 4,
             args.features
         )
@@ -465,12 +470,13 @@ def main(args):
             f'num_support={args.num_support}, '
             f'num_query={args.num_query}'
         )
-        dataloader_test = Fungi.get_fungi_dataloader(
+        dataloader_test = MixedDCDataset.get_mixed_dataloader(
             'test',
             1,
             args.num_way,
             args.num_support,
             args.num_query,
+            1,
             NUM_TEST_TASKS,
             args.features
         )
@@ -495,7 +501,7 @@ if __name__ == '__main__':
                         help='whether to optimize inner-loop learning rates')
     parser.add_argument('--outer_lr', type=float, default=0.001,
                         help='outer-loop learning rate')
-    parser.add_argument('--batch_size', type=int, default=16,
+    parser.add_argument('--batch_size', type=int, default=4,
                         help='number of tasks per outer-loop update')
     parser.add_argument('--num_train_iterations', type=int, default=3000,
                         help='number of outer-loop updates to train for')
@@ -506,6 +512,8 @@ if __name__ == '__main__':
                               'training, or for evaluation (-1 is ignored)'))
     parser.add_argument('--features', type=str, default='images', choices=['images'],
                         help='which features to use (images for raw inputs)')
+    parser.add_argument('--fungi_portion', type=float, default=1,
+                        help='proportion of unsupervised fungi tasks during training')
 
     main_args = parser.parse_args()
     main(main_args)
